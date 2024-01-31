@@ -6,32 +6,65 @@ import os
 import shutil
 import time
 from dotenv import load_dotenv
+import logging
+from colorama import Fore, Style, init
+import sys
+
+# Initialize colorama
+init()
+
+# Version number
+VERSION = "0.1A"
+
+# Setup colorful logging to console
+class ColorfulLogger(logging.StreamHandler):
+    def emit(self, record):
+        log_color = {
+            'INFO': Fore.GREEN,
+            'WARNING': Fore.YELLOW,
+            'ERROR': Fore.RED,
+            'CRITICAL': Fore.RED + Style.BRIGHT,
+        }.get(record.levelname, Fore.WHITE)
+        msg = self.format(record)
+        self.stream.write(log_color + msg + Style.RESET_ALL + '\n')
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+console_handler = ColorfulLogger()
+console_handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(message)s'))
+logger.addHandler(console_handler)
 
 load_dotenv()
 
 base_dir = os.getenv('BASE_DIR', "C:\\Development")
 archive_dir = os.getenv('ARCHIVE_DIR', os.path.join(base_dir, "Archive"))
-
-# Get the current time
-current_time = time.time()
-
-# Define the period after which files should be archived, from environment variables
 archive_after = int(os.getenv('ARCHIVE_AFTER_SECONDS', 4 * 7 * 24 * 60 * 60))  # Defaults to 4 weeks
 
-# Function to archive old projects
 def archive_old_projects(directory):
     for project in os.listdir(directory):
         project_path = os.path.join(directory, project)
-        # Exclude the Archive directory and any non-directory files
         if project == "Archive" or not os.path.isdir(project_path):
             continue
         last_mod_time = os.path.getmtime(project_path)
-        if current_time - last_mod_time > archive_after:
-            archive_path = os.path.join(archive_dir, os.path.basename(project_path))
+        if time.time() - last_mod_time > archive_after:
+            archive_path = os.path.join(archive_dir, project)
             shutil.move(project_path, archive_path)
-            print(f"Archived: {project}")
+            logging.info(f"Archived: {project}")
 
-archive_old_projects(base_dir)
+def main():
+    start_time = time.time()
+    logging.info(f"AutoArchiver version {VERSION} started.")
+    while True:
+        current_time = time.time()
+        elapsed_time = current_time - start_time
+        logging.info(f"Running for {elapsed_time:.2f} seconds.")
+        archive_old_projects(base_dir)
+        time.sleep(60)  # Check every 60 seconds
 
-print("Archiving complete.")
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        logging.info("Archiving interrupted by user.")
+
 
