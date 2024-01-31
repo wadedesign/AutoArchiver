@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 import logging
 from colorama import Fore, Style, init
 import sys
+import argparse
 
 # Initialize colorama
 init()
@@ -36,29 +37,50 @@ logger.addHandler(console_handler)
 
 load_dotenv()
 
-base_dir = os.getenv('BASE_DIR', "C:\\Development")
-archive_dir = os.getenv('ARCHIVE_DIR', os.path.join(base_dir, "Archive"))
-archive_after = int(os.getenv('ARCHIVE_AFTER_SECONDS', 4 * 7 * 24 * 60 * 60))  # Defaults to 4 weeks
+# Command line arguments
+parser = argparse.ArgumentParser(description="AutoArchiver with configurable file selection")
+parser.add_argument("--base-dir", default=os.getenv('BASE_DIR', "C:\\Development"), help="Base directory to scan")
+parser.add_argument("--archive-dir", default=os.getenv('ARCHIVE_DIR'), help="Directory to archive old projects")
+parser.add_argument("--archive-after", type=int, default=int(os.getenv('ARCHIVE_AFTER_SECONDS', 4 * 7 * 24 * 60 * 60)), help="Archive files older than this duration (in seconds)")
+parser.add_argument("--include-types", nargs="*", help="List of file extensions to include in archive")
+parser.add_argument("--exclude-types", nargs="*", help="List of file extensions to exclude from archive")
+parser.add_argument("--exclude-dirs", nargs="*", help="List of directories to exclude from archive")
+args = parser.parse_args()
 
-def archive_old_projects(directory):
-    for project in os.listdir(directory):
-        project_path = os.path.join(directory, project)
-        if project == "Archive" or not os.path.isdir(project_path):
-            continue
-        last_mod_time = os.path.getmtime(project_path)
-        if time.time() - last_mod_time > archive_after:
-            archive_path = os.path.join(archive_dir, project)
-            shutil.move(project_path, archive_path)
-            logging.info(f"Archived: {project}")
+def should_include_file(file, include_types, exclude_types):
+    if include_types:
+        return any(file.endswith(ext) for ext in include_types)
+    if exclude_types:
+        return not any(file.endswith(ext) for ext in exclude_types)
+    return True
+
+def should_exclude_dir(dir, exclude_dirs):
+    return any(ex_dir in dir for ex_dir in exclude_dirs)
+
+def archive_old_projects(directory, include_types, exclude_types, exclude_dirs):
+    for root, dirs, files in os.walk(directory, topdown=True):
+        dirs[:] = [d for d in dirs if not should_exclude_dir(os.path.join(root, d), exclude_dirs)]
+        for file in files:
+            if not should_include_file(file, include_types, exclude_types):
+                continue
+            file_path = os.path.join(root, file)
+            last_mod_time = os.path.getmtime(file_path)
+            if time.time() - last_mod_time > args.archive_after:
+                archive_path = os.path.join(args.archive_dir, os.path.relpath(root, directory), file)
+                os.makedirs(os.path.dirname(archive_path), exist_ok=True)
+                shutil.move(file_path, archive_path)
+                logging.info(f"Archived: {file_path}")
 
 def main():
     start_time = time.time()
     logging.info(f"AutoArchiver version {VERSION} started.")
+    if not args.archive_dir:
+        args.archive_dir = os.path.join(args.base_dir, "Archive")
     while True:
         current_time = time.time()
         elapsed_time = current_time - start_time
         logging.info(f"Running for {elapsed_time:.2f} seconds.")
-        archive_old_projects(base_dir)
+        archive_old_projects(args.base_dir, args.include_types, args.exclude_types, args.exclude_dirs or [])
         time.sleep(60)  # Check every 60 seconds
 
 if __name__ == "__main__":

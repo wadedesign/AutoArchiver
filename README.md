@@ -67,13 +67,13 @@ We welcome contributions of all kinds from bug fixes to feature enhancements. Pl
 
 ## Functionality Enhancements
 
-- [x] **Implement Colorful Logging**
+- [x] **Implement Colorful Logging  ``1/30/24``**
   - Integrate the `colorama` library for colorful console output, making logs more readable and engaging.
 
 - [ ] **Expand File Selection Criteria**
   - Add functionality to include or exclude specific file types or directories from being archived.
 
-- [ ] **Configuration via Command Line**
+- [x] **Configuration via Command Line ``1/30/24``** 
   - Enable users to configure archive settings directly through command-line arguments.
 
 - [ ] **Logging to File and Console**
@@ -104,7 +104,7 @@ We welcome contributions of all kinds from bug fixes to feature enhancements. Pl
 
 ## Security and Reliability
 
-- [x] **Secure Configuration Storage**
+- [x] **Secure Configuration Storage  ``1/30/24``**
   - Encrypt sensitive information in the `.env` file, such as paths to critical directories.
 
 - [ ] **Backup Before Archiving**
@@ -112,7 +112,7 @@ We welcome contributions of all kinds from bug fixes to feature enhancements. Pl
 
 ## Documentation and Community
 
-- [ ] **Detailed User Documentation**
+- [x] **Detailed User Documentation  ``1/30/24``**
   - Create comprehensive user documentation, including setup, usage, and troubleshooting guides.
 
 - [ ] **Community Engagement**
