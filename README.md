@@ -104,7 +104,7 @@ We welcome contributions of all kinds from bug fixes to feature enhancements. Pl
 
 ## Security and Reliability
 
-- [ x ] **Secure Configuration Storage**
+- [x] **Secure Configuration Storage**
   - Encrypt sensitive information in the `.env` file, such as paths to critical directories.
 
 - [ ] **Backup Before Archiving**
